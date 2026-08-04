@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         String       @default("STUDENT")
+  branch       String?
+  batch        Int?
+  experiences  Experience[]
+  votes        Vote[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Company {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  logoUrl     String?
+  sector      String?
+  experiences Experience[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Experience {
+  id          Int      @id @default(autoincrement())
+  authorId    Int
+  companyId   Int
+  role        String
+  year        Int
+  verdict     String
+  difficulty  Int
+  isAnonymous Boolean  @default(false)
+  body        String   @db.Text
+  upvoteCount Int      @default(0)
+
+  author      User     @relation(fields: [authorId], references: [id])
+  company     Company  @relation(fields: [companyId], references: [id])
+  votes       Vote[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Vote {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  experienceId Int
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, experienceId])
+}
